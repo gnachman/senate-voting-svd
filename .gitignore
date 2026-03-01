@@ -1,5 +1,4 @@
 data/
-plots/
 *.tar
 __pycache__/
 .DS_Store
