@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senate Polarization (1947-2025)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1rem;
+            text-align: center;
+            background: #16213e;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: #16213e;
+            border-top: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        select {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            background: #0f3460;
+            color: #eee;
+            cursor: pointer;
+        }
+
+        button {
+            font-size: 1.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            background: #0f3460;
+            color: #eee;
+            cursor: pointer;
+            min-width: 3rem;
+            transition: background 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #1a5490;
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .image-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1rem;
+            overflow: auto;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .nav-hint {
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                gap: 1rem;
+            }
+
+            button {
+                min-width: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Senate Voting Patterns: SVD Analysis</h1>
+    </header>
+
+    <div class="controls">
+        <button id="prev" aria-label="Previous congress">&larr;</button>
+        <select id="congress-select" aria-label="Select congress"></select>
+        <button id="next" aria-label="Next congress">&rarr;</button>
+    </div>
+
+    <div class="image-container">
+        <img id="plot" src="" alt="Senate voting SVD plot">
+    </div>
+
+    <div class="nav-hint">Swipe or use arrow keys to navigate</div>
+
+    <script>
+        const START_CONGRESS = 80;
+        const END_CONGRESS = 118;
+
+        let currentCongress = END_CONGRESS;
+
+        const select = document.getElementById('congress-select');
+        const img = document.getElementById('plot');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+
+        // Populate select
+        for (let c = END_CONGRESS; c >= START_CONGRESS; c--) {
+            const startYear = 1789 + (c - 1) * 2;
+            const option = document.createElement('option');
+            option.value = c;
+            option.textContent = `${c}th Congress (${startYear}-${startYear + 2})`;
+            select.appendChild(option);
+        }
+
+        function congressToFilename(congress) {
+            return `plots/congress_${String(congress).padStart(3, '0')}.png`;
+        }
+
+        function updateDisplay() {
+            select.value = currentCongress;
+            img.src = congressToFilename(currentCongress);
+            prevBtn.disabled = currentCongress <= START_CONGRESS;
+            nextBtn.disabled = currentCongress >= END_CONGRESS;
+        }
+
+        function goTo(congress) {
+            currentCongress = Math.max(START_CONGRESS, Math.min(END_CONGRESS, congress));
+            updateDisplay();
+        }
+
+        select.addEventListener('change', () => goTo(parseInt(select.value)));
+        prevBtn.addEventListener('click', () => goTo(currentCongress - 1));
+        nextBtn.addEventListener('click', () => goTo(currentCongress + 1));
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') goTo(currentCongress - 1);
+            if (e.key === 'ArrowRight') goTo(currentCongress + 1);
+        });
+
+        // Touch swipe navigation
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) goTo(currentCongress + 1);
+                else goTo(currentCongress - 1);
+            }
+        });
+
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>
